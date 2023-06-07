@@ -25,6 +25,11 @@ int main()
 			std::cout << "[PROGRESS] " << remaining << " of " << elements << " archives left (" << remaining << "/" << elements << ")!" << std::endl;
 	}
 	
+	while (!parser.IsDone())
+	{
+		std::this_thread::sleep_for(std::chrono::milliseconds(100));
+	}
+
 	parser.WriteDataToFile("map_info.json");
 }
 
