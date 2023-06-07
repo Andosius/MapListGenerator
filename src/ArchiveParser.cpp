@@ -19,37 +19,6 @@ ArchiveParser::~ArchiveParser()
 	m_ThreadPool.Shutdown();
 }
 
-void ArchiveParser::CheckResults()
-{
-	auto it = m_Futures.begin();
-
-	while (it != m_Futures.end())
-	{
-		if (it->valid())
-		{
-			if (it->wait_for(std::chrono::microseconds(1)) == std::future_status::ready)
-			{
-				nlohmann::json obj = it->get();
-
-				if (obj["name"] == "")
-					m_FailedArray.emplace_back(obj);
-				else
-					m_MapArray.emplace_back(obj);
-
-				it = m_Futures.erase(it);
-			}
-			else
-			{
-				++it;
-			}
-		}
-		else
-		{
-			++it;
-		}
-	}
-}
-
 void ArchiveParser::GetAllArchives()
 {
 	for (const auto& entry : std::filesystem::directory_iterator(m_BasePath))
@@ -86,17 +55,18 @@ bool ArchiveParser::IsValidArchiveType(const std::string& filepath)
 size_t ArchiveParser::ProcessAll()
 {
 	for (const auto& archive : m_ArchivePaths)
-		m_Futures.push_back(m_ThreadPool.AddTask(std::bind(&ArchiveParser::ProcessElement, this, archive)));
+		m_ThreadPool.AddTask(std::bind(&ArchiveParser::ProcessElement, this, archive));
 
 	return m_ArchivePaths.size();
 }
 
-nlohmann::json ArchiveParser::ProcessElement(const std::string& archive)
+void ArchiveParser::ProcessElement(const std::string& archive)
 {
 	std::string mapName;
 	std::vector<std::string> meta_files = GetMetaFiles(archive);
 
 	nlohmann::json mapData;
+	mapData["name"] = "";
 	mapData["path"] = archive;
 
 	for (const auto& meta_file : meta_files)
@@ -108,12 +78,18 @@ nlohmann::json ArchiveParser::ProcessElement(const std::string& archive)
 		{
 			mapName = Utility::ExtractMapName(content);
 			mapData["name"] = mapName;
-
-			return mapData;
+			break;
 		}
 	}
-	mapData["name"] = "";
-	return mapData;
+
+	{
+		std::lock_guard<std::mutex> lock(m_Mutex);
+
+		if (mapData["name"] == "")
+			m_FailedArray.emplace_back(mapData);
+		else
+			m_MapArray.emplace_back(mapData);
+	}
 }
 
 std::vector<std::string> ArchiveParser::GetMetaFiles(const std::string& archive)
@@ -145,6 +121,9 @@ std::string ArchiveParser::GetMetaFileContent(const std::string& archive, const 
 
 void ArchiveParser::WriteDataToFile(const std::string& outputFileName)
 {
+	std::lock_guard <std::mutex> lock(m_Mutex);
+
+
 	nlohmann::json data;
 	data["maps"] = m_MapArray;
 	data["unresolved"] = m_FailedArray;
@@ -155,4 +134,9 @@ void ArchiveParser::WriteDataToFile(const std::string& outputFileName)
 
 	outputStream << output << std::endl;
 	outputStream.close();
+}
+
+bool ArchiveParser::IsDone()
+{
+	return m_ArchivePaths.size() == (m_MapArray.size() + m_FailedArray.size());
 }

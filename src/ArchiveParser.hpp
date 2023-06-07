@@ -15,17 +15,17 @@ public:
 	~ArchiveParser();
 
 	size_t GetQueueSize() { return m_ThreadPool.QueueSize(); }
-	size_t GetOutstandingElementSize() { return m_Futures.size(); }
-	void CheckResults();
 
 	size_t ProcessAll();
 	void WriteDataToFile(const std::string& outputFileName);
+
+	bool IsDone();
 	
 
 private:
 	void GetAllArchives();
 	bool IsValidArchiveType(const std::string& filepath);
-	nlohmann::json ProcessElement(const std::string& archive);
+	void ProcessElement(const std::string& archive);
 
 
 // Processing functions
@@ -39,7 +39,7 @@ private:
 
 	ThreadPool m_ThreadPool;
 
-	std::vector<std::future<nlohmann::json>> m_Futures;
+	std::mutex m_Mutex;
 
 	nlohmann::json m_MapArray = nlohmann::json::array();
 	nlohmann::json m_FailedArray = nlohmann::json::array();

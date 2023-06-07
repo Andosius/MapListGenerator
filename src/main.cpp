@@ -13,21 +13,18 @@ int main()
 	ArchiveParser parser = ArchiveParser(R"(\\nas\Denis\Maps\)", threads);
 	size_t elements = parser.ProcessAll();
 
-
 	size_t last_remaining = elements;
 	size_t remaining = elements;
 
-	while (parser.GetOutstandingElementSize() > 0)
+	while (parser.GetQueueSize() > 0)
 	{
-		parser.CheckResults();
-
 		last_remaining = remaining;
-		remaining = parser.GetOutstandingElementSize();
+		remaining = parser.GetQueueSize();
 
 		if (last_remaining != remaining)
 			std::cout << "[PROGRESS] " << remaining << " of " << elements << " archives left (" << remaining << "/" << elements << ")!" << std::endl;
 	}
-
+	
 	parser.WriteDataToFile("map_info.json");
 }
 
