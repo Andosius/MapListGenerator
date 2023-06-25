@@ -5,6 +5,9 @@
 #include <fstream>
 #include <iostream>
 
+#define DEBUG_OUTPUT
+
+
 MainWorker::MainWorker()
 	: m_ThreadCount(Utility::CalculateThreads())
 {
@@ -77,7 +80,7 @@ bool MainWorker::LoadConfigurations()
 			std::cout << "[ERROR] Unable to read config.json file, invalid data. Aborting!" << std::endl;
 			std::cout << e.what() << std::endl;
 
-			exit(EXIT_FAILURE);
+			return false;
 		}
 
 		m_ParsePath = config["path"].get<std::string>();
@@ -99,7 +102,7 @@ bool MainWorker::LoadConfigurations()
 			configFile.close();
 
 			std::cout << "[INFO] Please configure the program, take a look at " << CONFIG_FILE << "!" << std::endl;
-			exit(EXIT_SUCCESS);
+			return false;
 
 		}
 
@@ -149,7 +152,7 @@ void MainWorker::ParseArchives()
 				
 			}
 
-#if 0
+#ifdef DEBUG_OUTPUT
 			if (map["name"] == "")
 			{
 				std::filesystem::path p(archive);
