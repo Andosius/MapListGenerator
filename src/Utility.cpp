@@ -136,8 +136,8 @@ namespace Utility
 									memset(buffer, 0, buffer_size);
 									if (mz_zip_reader_entry_save_buffer(zip_reader, buffer, buffer_size) == MZ_OK)
 									{
-										std::string file_content = std::string(buffer);
-										file_content = file_content.substr(0, buffer_size);
+										std::string file_content(buffer, buffer_size);
+
 										file_contents.push_back(file_content);
 
 									} else std::cout << "Can't save entry to buffer in file: \"" << archive_path << "\"!" << std::endl;
