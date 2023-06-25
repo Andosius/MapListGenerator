@@ -1,46 +1,38 @@
-#include "ArchiveParser.hpp"
+#include "MainWorker.hpp"
+#include "Timer.hpp"
 
 #include <iostream>
 
-int CalculateThreads();
-
-
 int main()
 {
-	int threads = CalculateThreads();
-	std::cout << "[MAP-LIST-GENERATOR] Processing archives with " << threads << " threads." << std::endl;
 
-	ArchiveParser parser = ArchiveParser(R"(\\nas\Denis\Maps\)", threads);
-	size_t elements = parser.ProcessAll();
+	MainWorker worker = MainWorker();
 
-	size_t last_remaining = elements;
-	size_t remaining = elements;
+	if (worker.LoadConfigurations())
+	{
+		worker.PrepareParsing();
 
-	while (parser.GetQueueSize() > 0)
+	}
+
+	worker.StartProcedure();
+
+
+	int elements = worker.GetTotalObjectCount();
+
+	int last_remaining = elements;
+	int remaining = elements;
+
+	while (worker.GetRemainingObjects() != 0)
 	{
 		last_remaining = remaining;
-		remaining = parser.GetQueueSize();
+		remaining = worker.GetRemainingObjects();
 
 		if (last_remaining != remaining)
-			std::cout << "[PROGRESS] " << remaining << " of " << elements << " archives left (" << remaining << "/" << elements << ")!" << std::endl;
-	}
-	
-	while (!parser.IsDone())
-	{
-		std::this_thread::sleep_for(std::chrono::milliseconds(100));
+			std::cout << "[PROGRESS] " << remaining << " of " << elements << " archives left (" << worker.GetProcessedCount() << "/" << elements << ")!" << std::endl;
 	}
 
-	parser.WriteDataToFile("map_info.json");
-}
+	worker.WriteResult("map_info.json");
 
-int CalculateThreads()
-{
-	int threads = std::thread::hardware_concurrency();
 
-	if (!threads)
-		threads = 1;
-	else
-		threads = threads / 2;
-
-	return threads;
+	return 0;
 }

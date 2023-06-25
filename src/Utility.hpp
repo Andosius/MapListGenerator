@@ -2,71 +2,43 @@
 
 #include <pugixml.hpp>
 
+#include "concurrentqueue.h"
+
 #include <string>
 #include <array>
 #include <io.h>
 #include <regex>
 
 
-std::regex SevenZipFileOutputFilter = std::regex(R"(\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2} \S+ +\d+ +\d+\s+(.+))");
-
 namespace Utility
 {
-	std::string GetCommandResult(const std::string command)
-	{
-		std::string result;
-		std::array<char, 256> buffer = {};
+	/*void SetSevenZipPath(std::string& sevenZipPath);
 
-		// Open command pipe
-		FILE* pipe = _popen(command.c_str(), "r");
+	std::string GetCommandResult(const std::string command);
 
-		if (pipe)
-		{
-			while (fgets(buffer.data(), (int)buffer.size(), pipe) != nullptr)
-			{
-				result += buffer.data();
-			}
-			_pclose(pipe);
-		}
+	bool IsValidMetaFile(const std::string& content);
 
-		return result;
-	}
+	std::string GetFilteredOutputLine(const std::string& line);
 
-	bool IsValidMetaFile(const std::string& content)
-	{
-		if (content.find("<info") != -1)
-		{
-			return true;
-		}
-		return false;
-	}
+	std::string ExtractMapName(const std::string& xmlContent);
 
-	std::string GetFilteredOutputLine(const std::string& line)
-	{
-		std::string result;
-		std::smatch matches;
+	int GetAllArchives(const std::string& base_path, moodycamel::ConcurrentQueue<std::string>& queue);
 
-		if (std::regex_search(line, matches, SevenZipFileOutputFilter) && matches.size() > 1) {
-			result = matches[1].str();
-		}
-		return result;
-	}
+	bool IsZipArchive(const std::string& filepath);
 
-	std::string ExtractMapName(const std::string& xmlContent)
-	{
-		pugi::xml_document doc;
-		if (!doc.load_string(xmlContent.c_str()))
-			return "";
+	std::vector<std::string> GetMetaFiles(const std::string& archive);
 
-		pugi::xml_node infoNode = doc.select_node("/meta/info").node();
-		if (!infoNode)
-			return "";
+	std::string GetMetaFileContent(const std::string& archive, const std::string& file);
 
-		pugi::xml_attribute nameAttribute = infoNode.attribute("name");
-		if (!nameAttribute)
-			return "";
+	int CalculateThreads();*/
 
-		std::string mapName = nameAttribute.value();
-		return mapName;
-	}
+	// REWRITE
+	int CalculateThreads();
+	bool IsAnyArchive(const std::string& filepath);
+	bool IsZipArchive(const std::string& filepath);
+
+	std::string ExtractMapName(const std::string& xmlContent);
+
+	int GetAllArchives(const std::string& base_path, moodycamel::ConcurrentQueue<std::string>& queue);
+	void GetArchiveMetaFileContents(const std::string& archive_path, std::vector<std::string>& file_contents);
 }
