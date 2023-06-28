@@ -56,59 +56,27 @@ void MainWorker::DestroyThreads()
 
 bool MainWorker::LoadConfigurations()
 {
-	if (std::filesystem::is_regular_file(CONFIG_FILE))
+	nlohmann::json config;
+
+	if (!std::filesystem::exists(CONFIG_FILE))
 	{
-		std::ifstream configFile;
-		configFile.open(CONFIG_FILE);
-
-		std::string content = "";
-		std::string line;
-
-		while (std::getline(configFile, line) && configFile.good())
-		{
-			content += line;
-		}
-		configFile.close();
-
-
-		nlohmann::json config;
-		try {
-			config = nlohmann::json::parse(content);
-		}
-		catch (nlohmann::json::parse_error& e)
-		{
-			std::cout << "[ERROR] Unable to read config.json file, invalid data. Aborting!" << std::endl;
-			std::cout << e.what() << std::endl;
-
-			return false;
-		}
-
-		m_ParsePath = config["path"].get<std::string>();
-		return true;
-	}
-	else
-	{
-		nlohmann::json config;
 		config["path"] = "";
 
-		std::ofstream configFile;
-		configFile.open(CONFIG_FILE, std::ios_base::app);
+		std::ofstream file(CONFIG_FILE);
+		file << config.dump(4) << std::endl;
 
-		if (configFile.is_open())
-		{
-			std::string dump = config.dump(4);
-			configFile << dump << std::endl;
+		std::cout << "[INFO] Please configure the program, take a look at " << CONFIG_FILE << "!" << std::endl;
 
-			configFile.close();
-
-			std::cout << "[INFO] Please configure the program, take a look at " << CONFIG_FILE << "!" << std::endl;
-			return false;
-
-		}
-
-		return true;
+		return false;
 	}
-	return false;
+
+
+	std::ifstream file(CONFIG_FILE);
+
+	file >> config;
+	m_ParsePath = config["path"].get<std::string>();
+
+	return true;
 }
 
 void MainWorker::WriteResult(const char* filename)
