@@ -1,0 +1,2 @@
+call "C:\Program Files\Microsoft Visual Studio\2022\Community\Common7\Tools\VsDevCmd.bat" && MSBuild.exe "C:\Users\Denis\Desktop\MapListGenerator\build\MTAListGenerator.sln" "/p:Configuration=Release" "/p:PlatformTarget=x64" "/p:Platform=x64"
+pause
